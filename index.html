@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Penggajian Resto</title>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
     <style>
         :root {
             --bg-color: #0d0d0d;
@@ -541,21 +538,10 @@ script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canv
 document.head.appendChild(script);
 
 // ==========================================
-// 🔴 KONFIGURASI FIREBASE CLOUD DATABASE
+// KUNCI PINJAMAN CLOUD DATABASE GRATIS (KV BIN)
 // ==========================================
-const firebaseConfig = {
-    apiKey: "MASUKKAN_API_KEY_KAMU",
-    authDomain: "MASUKKAN_AUTH_DOMAIN_KAMU",
-    databaseURL: "MASUKKAN_DATABASE_URL_KAMU",
-    projectId: "MASUKKAN_PROJECT_ID_KAMU",
-    storageBucket: "MASUKKAN_STORAGE_BUCKET_KAMU",
-    messagingSenderId: "MASUKKAN_MESSAGING_SENDER_ID_KAMU",
-    appId: "MASUKKAN_APP_ID_KAMU"
-};
-
-// Inisialisasi Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+const CLOUD_STORAGE_URL = 'https://jsonbin.org/sendy_resto_payroll/data';
+const CLOUD_TOKEN = 'token 8bfd8858-6938-4e31-862d-0b6dc34fa793';
 
 // ==========================================
 // DATA KARYAWAN LENGKAP DENGAN GAJI POKOK ASLI
@@ -603,33 +589,51 @@ const payoutRows = document.getElementById('payoutRows');
 
 let currentGrandTotalGlobal = 0;
 let dataPenerimaGaji = [];
+let isPullingCloud = false;
 
-// ==========================================
-// REAL-TIME SYNC DARI FIREBASE CLOUD
-// ==========================================
-database.ref('savedDutyTimes').on('value', (snapshot) => {
-    savedDutyTimes = snapshot.val() || {};
-    // Ambil semua input yang sedang aktif di UI
-    const inputs = document.querySelectorAll('.duty-input');
-    inputs.forEach(input => {
-        const empName = input.getAttribute('data-name');
-        if (savedDutyTimes[empName] !== undefined) {
-            input.value = savedDutyTimes[empName];
-        }
-    });
-    updateKalkulasi();
-});
-
-database.ref('gajiArchive').on('value', (snapshot) => {
-    gajiArchive = snapshot.val() || {};
-    updateHistoryDropdown();
-    
-    // Trigger perubahan tampilan riwayat jika dropdown sedang dipilih
-    const selectEl = document.getElementById('historySelect');
-    if (selectEl && selectEl.value) {
-        selectEl.dispatchEvent(new Event('change'));
+// Fungsi simpan data gabungan ke Cloud
+async function pushToCloud() {
+    if (isPullingCloud) return;
+    try {
+        const payload = {
+            savedDutyTimes: savedDutyTimes,
+            gajiArchive: gajiArchive,
+            employees: employees
+        };
+        await fetch(CLOUD_STORAGE_URL, {
+            method: 'POST',
+            headers: { 'Authorization': CLOUD_TOKEN, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch (e) {
+        console.error("Gagal sinkronisasi ke cloud:", e);
     }
-});
+}
+
+// Fungsi ambil data dari Cloud
+async function pullFromCloud() {
+    try {
+        isPullingCloud = true;
+        const response = await fetch(CLOUD_STORAGE_URL, {
+            method: 'GET',
+            headers: { 'Authorization': CLOUD_TOKEN }
+        });
+        if (response.ok) {
+            const cloudData = await response.json();
+            if (cloudData && typeof cloudData === 'object') {
+                if (cloudData.employees) employees = cloudData.employees;
+                if (cloudData.savedDutyTimes) savedDutyTimes = cloudData.savedDutyTimes;
+                if (cloudData.gajiArchive) gajiArchive = cloudData.gajiArchive;
+            }
+        }
+    } catch (e) {
+        console.error("Gagal memuat data dari cloud:", e);
+    } finally {
+        isPullingCloud = false;
+        renderDashboard();
+        updateKalkulasi();
+    }
+}
 
 function renderDashboard() {
     container.innerHTML = ""; 
@@ -691,6 +695,7 @@ function updateKalkulasi() {
         const empName = input.getAttribute('data-name');
         const timeValue = input.value.trim();
         
+        savedDutyTimes[empName] = timeValue;
         const emp = employees[index];
         if (!emp) return; 
 
@@ -752,7 +757,7 @@ function formatTanggalIndo(dateStr) {
     return new Date(dateStr).toLocaleDateString('id-ID', options);
 }
 
-document.getElementById('btnArchiveWeek').addEventListener('click', function() {
+document.getElementById('btnArchiveWeek').addEventListener('click', async function() {
     const startDate = document.getElementById('archiveStartDate').value;
     const endDate = document.getElementById('archiveEndDate').value;
 
@@ -772,29 +777,25 @@ document.getElementById('btnArchiveWeek').addEventListener('click', function() {
         if (!confirm(`Arsip periode [${labelPeriode}] sudah ada. Ingin menimpa dengan rekap jam duty baru?`)) return;
     }
 
-    // Set Data ke Firebase Cloud
-    database.ref('gajiArchive/' + labelPeriode).set({
+    gajiArchive[labelPeriode] = {
         totalDana: formatDolar(Math.floor(currentGrandTotalGlobal)),
         listPenerima: [...dataPenerimaGaji]
-    }).then(() => {
-        alert(`🗄️ Sukses! Data periode [${labelPeriode}] tersimpan di Cloud Database.`);
-        
-        document.getElementById('archiveStartDate').value = "";
-        document.getElementById('archiveEndDate').value = "";
-        
-        // Reset Jam Duty di Firebase
-        let resetTimes = {};
-        employees.forEach(emp => { resetTimes[emp.name] = "00:00:00"; });
-        return database.ref('savedDutyTimes').set(resetTimes);
-    }).then(() => {
-        renderDashboard();
-        updateKalkulasi();
-    });
+    };
+
+    alert(`🗄️ Sukses! Data periode [${labelPeriode}] tersimpan di arsip riwayat bawah.`);
+
+    document.getElementById('archiveStartDate').value = "";
+    document.getElementById('archiveEndDate').value = "";
+    employees.forEach(emp => { savedDutyTimes[emp.name] = "00:00:00"; });
+    
+    await pushToCloud();
+    renderDashboard();
+    updateKalkulasi();
 });
 
 function updateHistoryDropdown() {
     const selectEl = document.getElementById('historySelect');
-    const currentSelection = selectEl.value;
+    const prevValue = selectEl.value;
     selectEl.innerHTML = '<option value="">-- Pilih Tanggal Arsip --</option>';
     
     const dates = Object.keys(gajiArchive);
@@ -808,7 +809,7 @@ function updateHistoryDropdown() {
         const opt = document.createElement('option');
         opt.value = date;
         opt.innerText = `Periode: ${date}`;
-        if(date === currentSelection) opt.selected = true;
+        if (date === prevValue) opt.selected = true;
         selectEl.appendChild(opt);
     });
 }
@@ -831,58 +832,46 @@ document.getElementById('historySelect').addEventListener('change', function() {
     btnDelete.style.display = "inline-block";
     
     let rowsHtml = "";
-    if(dataRecord.listPenerima) {
-        dataRecord.listPenerima.forEach(emp => {
-            rowsHtml += `<tr><td><strong>${emp.name}</strong></td><td><span style="color:var(--gold)">${emp.role}</span></td><td>${emp.duration}</td><td><span style="color:var(--gold); font-weight:bold;">${emp.totalPayout}</span></td></tr>`;
-        });
-    }
+    dataRecord.listPenerima.forEach(emp => {
+        rowsHtml += `<tr><td><strong>${emp.name}</strong></td><td><span style="color:var(--gold)">${emp.role}</span></td><td>${emp.duration}</td><td><span style="color:var(--gold); font-weight:bold;">${emp.totalPayout}</span></td></tr>`;
+    });
 
     histRows.innerHTML = rowsHtml;
     displayArea.style.display = "block";
 });
 
-document.getElementById('btnDeleteSelectedArchive').addEventListener('click', function() {
+document.getElementById('btnDeleteSelectedArchive').addEventListener('click', async function() {
     const selectedDate = document.getElementById('historySelect').value;
     if (confirm(`Yakin ingin menghapus permanen seluruh data arsip periode [${selectedDate}]?`)) {
-        database.ref('gajiArchive/' + selectedDate).remove().then(() => {
-            document.getElementById('historyDisplayArea').style.display = "none";
-            alert("Arsip berhasil dihapus dari cloud.");
-        });
+        delete gajiArchive[selectedDate];
+        document.getElementById('historyDisplayArea').style.display = "none";
+        alert("Arsip berhasil dihapus.");
+        await pushToCloud();
+        renderDashboard();
     }
 });
 
 function hapusKaryawan(name) {
     if (confirm(`Apakah anda yakin ingin menghapus "${name}" dari list resto?`)) {
         employees = employees.filter(emp => emp.name !== name);
-        database.ref('savedDutyTimes/' + name).remove().then(() => {
-            renderDashboard();
-            updateKalkulasi();
-        });
+        delete savedDutyTimes[name];
+        pushToCloud();
+        renderDashboard();
+        updateKalkulasi();
     }
 }
 
-document.getElementById('btnAddMember').addEventListener('click', function() {
+document.getElementById('btnAddMember').addEventListener('click', async function() {
     const nameInput = document.getElementById('newEmpName');
     const roleSelect = document.getElementById('newEmpRole');
     const name = nameInput.value.trim(); const role = roleSelect.value;
     if (!name || !role) { alert('Tolong isi Nama dan pilih Jabatan!'); return; }
     if (employees.some(emp => emp.name.toLowerCase() === name.toLowerCase())) { alert('Nama sudah terdaftar!'); return; }
     employees.push({ name: name, role: role, baseSalary: roleSalaries[role] });
-    
-    database.ref('savedDutyTimes/' + name).set("00:00:00").then(() => {
-        nameInput.value = ""; roleSelect.selectedIndex = 0;
-        renderDashboard(); 
-        updateKalkulasi();
-    });
-});
-
-// Event Handler Input untuk Sinkronisasi ke Cloud saat Diketik
-container.addEventListener('input', function(e) {
-    if(e.target.classList.contains('duty-input')) {
-        const empName = e.target.getAttribute('data-name');
-        const timeValue = e.target.value.trim();
-        database.ref('savedDutyTimes/' + empName).set(timeValue);
-    }
+    nameInput.value = ""; roleSelect.selectedIndex = 0;
+    await pushToCloud();
+    renderDashboard(); 
+    updateKalkulasi();
 });
 
 document.getElementById('btnSharePayout').addEventListener('click', function() {
@@ -909,7 +898,19 @@ document.getElementById('btnDownloadImage').addEventListener('click', function()
     }).catch(err => { alert("Gagal memproses gambar!"); console.error(err); });
 });
 
-renderDashboard();
+// Event listener input langsung push real-time ke database cloud saat diketik
+let typingTimer;
+container.addEventListener('input', function() {
+    updateKalkulasi();
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(pushToCloud, 1000); // menghemat kuota request, push setelah 1 detik berhenti ngetik
+});
+
+// Jalankan pengambilan data cloud di awal aplikasi dibuka
+pullFromCloud();
+
+// Selalu cek update dari device lain setiap 5 detik secara otomatis
+setInterval(pullFromCloud, 5000);
 </script>
 
 </body>
