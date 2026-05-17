@@ -373,7 +373,6 @@
             .summary-card { flex: 1; }
         }
 
-        /* Di PC / Laptop (1024px ke atas) Tetap Dibuat Atas-Bawah Biar Lega & Rapi Sesuai Request */
         @media (min-width: 1024px) {
             .summary-box { flex-direction: row; justify-content: space-between; align-items: center; }
             .summary-left-group { flex: 1; }
@@ -421,8 +420,7 @@
                 </div>
             </div>
 
-            <div id="roleSectionsContainer">
-                </div>
+            <div id="roleSectionsContainer"></div>
         </div>
 
         <div class="layout-right">
@@ -524,46 +522,45 @@
                                     <th>Gaji Cair</th>
                                 </tr>
                             </thead>
-                            <tbody id="historyRows">
-                                </tbody>
+                            <tbody id="historyRows"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
             
-        </div> </div> </div> <script>
+        </div>
+    </div>
+</div>
+
+<script>
 // LOAD LIBRARY SCREENSHOT OTOMATIS
 const script = document.createElement('script');
 script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
 document.head.appendChild(script);
 
 // ==========================================
-// KUNCI PINJAMAN CLOUD DATABASE GRATIS (KV BIN)
+// CONFIGURASI CLOUD LIVE DATABASE STORAGE
 // ==========================================
 const CLOUD_STORAGE_URL = 'https://jsonbin.org/sendy_resto_payroll/data';
 const CLOUD_TOKEN = 'token 8bfd8858-6938-4e31-862d-0b6dc34fa793';
 
 // ==========================================
-// DATA KARYAWAN LENGKAP DENGAN GAJI POKOK ASLI
+// DATA KARYAWAN LENGKAP
 // ==========================================
 let employees = [
     { name: "Eleanor Seraphina", role: "CEO", baseSalary: 85000 },
     { name: "Udin W Mokondo", role: "CEO", baseSalary: 85000 },
-    
     { name: "Camelia Iris TAKA", role: "Direktur", baseSalary: 80000 },
     { name: "Brandon Adelard Diviner", role: "Direktur", baseSalary: 80000 },
-    
     { name: "Rayisa Hildegard (SPV)", role: "Wakil Direktur", baseSalary: 75000 },
     { name: "Vanez de joulene (SPV)", role: "Wakil Direktur", baseSalary: 75000 },
     { name: "Gretta Aveline TAKA (ADM)", role: "Wakil Direktur", baseSalary: 75000 },
     { name: "Edgar Elvilio S TAKA (HRD/SDM)", role: "Wakil Direktur", baseSalary: 75000 },
     { name: "Gracie Neyra (HRD/SDM)", role: "Wakil Direktur", baseSalary: 75000 },
-    
     { name: "Raymond Miles", role: "Chef", baseSalary: 60000 },
     { name: "Ethan Dean L. TAKA", role: "Chef", baseSalary: 60000 },
     { name: "Aluna Xyra", role: "Chef", baseSalary: 60000 },
     { name: "Lucy Hanami", role: "Chef", baseSalary: 60000 },
-    
     { name: "ZENO._XVEP", role: "Staff", baseSalary: 55000 },
     { name: "Steven Boyen", role: "Staff", baseSalary: 55000 },
     { name: "Shuhua Crystal", role: "Staff", baseSalary: 55000 },
@@ -589,31 +586,28 @@ const payoutRows = document.getElementById('payoutRows');
 
 let currentGrandTotalGlobal = 0;
 let dataPenerimaGaji = [];
-let isPullingCloud = false;
+let isProcessingCloud = false;
 
-// Fungsi simpan data gabungan ke Cloud
+// Fungsi Simpan ke Cloud Database
 async function pushToCloud() {
-    if (isPullingCloud) return;
+    if (isProcessingCloud) return;
     try {
-        const payload = {
-            savedDutyTimes: savedDutyTimes,
-            gajiArchive: gajiArchive,
-            employees: employees
-        };
+        const payload = { savedDutyTimes, gajiArchive, employees };
         await fetch(CLOUD_STORAGE_URL, {
             method: 'POST',
             headers: { 'Authorization': CLOUD_TOKEN, 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
     } catch (e) {
-        console.error("Gagal sinkronisasi ke cloud:", e);
+        console.error("Gagal menyimpan ke cloud:", e);
     }
 }
 
-// Fungsi ambil data dari Cloud
+// Fungsi Ambil dari Cloud Database
 async function pullFromCloud() {
+    if (isProcessingCloud) return;
     try {
-        isPullingCloud = true;
+        isProcessingCloud = true;
         const response = await fetch(CLOUD_STORAGE_URL, {
             method: 'GET',
             headers: { 'Authorization': CLOUD_TOKEN }
@@ -627,15 +621,18 @@ async function pullFromCloud() {
             }
         }
     } catch (e) {
-        console.error("Gagal memuat data dari cloud:", e);
+        console.error("Gagal mengambil data cloud:", e);
     } finally {
-        isPullingCloud = false;
+        isProcessingCloud = false;
         renderDashboard();
         updateKalkulasi();
     }
 }
 
 function renderDashboard() {
+    const activeSelect = document.activeElement;
+    const activeDataIndex = activeSelect ? activeSelect.getAttribute('data-index') : null;
+
     container.innerHTML = ""; 
     document.getElementById('totalEmployees').innerText = employees.length;
 
@@ -674,7 +671,13 @@ function renderDashboard() {
             container.appendChild(section);
         }
     });
+    
     updateHistoryDropdown();
+
+    if (activeDataIndex !== null) {
+        const inputToRefocus = document.querySelector(`.duty-input[data-index="${activeDataIndex}"]`);
+        if (inputToRefocus) inputToRefocus.focus();
+    }
 }
 
 function konversiKeJamDesimal(timeStr) {
@@ -898,18 +901,18 @@ document.getElementById('btnDownloadImage').addEventListener('click', function()
     }).catch(err => { alert("Gagal memproses gambar!"); console.error(err); });
 });
 
-// Event listener input langsung push real-time ke database cloud saat diketik
+// Real-Time auto save saat ngetik
 let typingTimer;
 container.addEventListener('input', function() {
     updateKalkulasi();
     clearTimeout(typingTimer);
-    typingTimer = setTimeout(pushToCloud, 1000); // menghemat kuota request, push setelah 1 detik berhenti ngetik
+    typingTimer = setTimeout(pushToCloud, 1000); 
 });
 
-// Jalankan pengambilan data cloud di awal aplikasi dibuka
+// Ambil data awal saat web dibuka
 pullFromCloud();
 
-// Selalu cek update dari device lain setiap 5 detik secara otomatis
+// Selalu sinkronisasi data dari device lain tiap 5 detik secara background
 setInterval(pullFromCloud, 5000);
 </script>
 
