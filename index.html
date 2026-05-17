@@ -39,7 +39,6 @@
             min-height: 100vh;
         }
 
-        /* Base Container - Full Width Layout */
         .dashboard-container {
             background-color: var(--card-bg);
             width: 100%;
@@ -54,7 +53,6 @@
             gap: 25px;
         }
 
-        /* Header */
         .dashboard-header {
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 20px;
@@ -83,7 +81,6 @@
             margin-top: 4px;
         }
 
-        /* Layout Grid System - Dipaksa Vertikal/Atas-Bawah di Semua Layar */
         .main-layout-grid {
             display: flex;
             flex-direction: column;
@@ -98,7 +95,6 @@
             width: 100%;
         }
 
-        /* Form Box */
         .add-member-box {
             background-color: rgba(0, 0, 0, 0.4);
             padding: 20px;
@@ -149,7 +145,6 @@
         }
         .add-form button:hover { background-color: var(--primary-red-hover); }
 
-        /* Table Section Setup */
         .role-section {
             background-color: rgba(20, 20, 20, 0.8);
             border-radius: 10px;
@@ -202,7 +197,6 @@
         }
         .duty-input:focus { border-color: var(--gold); outline: none; }
 
-        /* Status Badges */
         .status-text { font-size: 12px; font-weight: 600; padding: 4px 8px; border-radius: 4px; }
         .status-text.text-danger { background-color: rgba(220, 38, 38, 0.15); color: #ef4444; }
         .status-text.text-warning { background-color: rgba(245, 158, 11, 0.15); color: var(--warning); }
@@ -219,7 +213,6 @@
         }
         .btn-delete:hover { color: #ef4444; }
 
-        /* Capture Area */
         .payout-details-box {
             background-color: #141414;
             padding: 20px;
@@ -234,16 +227,22 @@
             margin-bottom: 16px;
         }
         .payout-header-inside h3 { font-size: 13px; color: var(--gold); text-transform: uppercase; }
+        
+        /* Loading & Sync Badge */
         .badge-live {
             font-size: 10px;
-            background: rgba(220, 38, 38, 0.15);
-            color: #ef4444;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
             padding: 2px 8px;
             border-radius: 20px;
-            border: 1px solid rgba(220, 38, 38, 0.3);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .badge-live.syncing {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
-        /* Capture Mini Cards Inside Screenshot */
         .capture-summary-flex {
             margin-top: 20px;
             padding-top: 15px;
@@ -266,7 +265,6 @@
         .mini-value { font-size: 18px; font-weight: 800; color: #fff; margin-top: 2px; }
         .text-gold { color: var(--gold) !important; }
 
-        /* Buttons & Summary Controls */
         .action-buttons-flex { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
         .btn-share { background-color: #1f1f1f; border: 1px solid var(--border-color); }
         .btn-share:hover { background-color: #2d2d2d; }
@@ -304,7 +302,6 @@
         .card-value { font-size: 20px; font-weight: 800; color: #fff; }
         .card-value.text-gold { color: var(--gold); font-size: 24px; }
 
-        /* Archive block */
         .archive-date-form {
             background-color: var(--card-bg-light);
             padding: 15px;
@@ -328,7 +325,6 @@
         .btn-archive { background-color: var(--gold); color: #000; width: 100%; border: none; }
         .btn-archive:hover { background-color: #b89327; }
 
-        /* History Block */
         .history-box {
             background-color: transparent;
             border: 1px dashed var(--border-color);
@@ -355,9 +351,6 @@
             border: 1px solid var(--border-color);
         }
 
-        /* ===================================================
-           UPGRADED RESPONSIVE - FULL WIDTH BLOCK-BASED
-        =================================================== */
         @media (min-width: 600px) {
             .dashboard-container { padding: 25px; }
             h2 { font-size: 24px; }
@@ -379,7 +372,6 @@
             .archive-date-form { width: 400px; }
         }
 
-        /* Animation */
         .animate-fade-in { animation: fadeIn 0.2s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
@@ -398,7 +390,6 @@
     </div>
     
     <div class="main-layout-grid">
-        
         <div class="layout-left">
             <div class="add-member-box">
                 <h3>✨ + Tambah Anggota Baru</h3>
@@ -428,7 +419,7 @@
                 <div id="payoutCaptureArea" class="capture-zone">
                     <div class="payout-header-inside">
                         <h3>📋 Rincian Karyawan Cair Gaji (&ge; 10 Jam)</h3>
-                        <span class="badge-live">Live Sync</span>
+                        <span id="syncBadge" class="badge-live">Koneksi Cloud Aman</span>
                     </div>
                     
                     <div class="table-responsive">
@@ -527,10 +518,9 @@
                     </div>
                 </div>
             </div>
-            
-        </div>
-    </div>
-</div>
+        </div> 
+    </div> 
+</div> 
 
 <script>
 // LOAD LIBRARY SCREENSHOT OTOMATIS
@@ -544,9 +534,6 @@ document.head.appendChild(script);
 const CLOUD_STORAGE_URL = 'https://jsonbin.org/sendy_resto_payroll/data';
 const CLOUD_TOKEN = 'token 8bfd8858-6938-4e31-862d-0b6dc34fa793';
 
-// ==========================================
-// DATA KARYAWAN LENGKAP
-// ==========================================
 let employees = [
     { name: "Eleanor Seraphina", role: "CEO", baseSalary: 85000 },
     { name: "Udin W Mokondo", role: "CEO", baseSalary: 85000 },
@@ -583,30 +570,39 @@ const roleOrder = ["CEO", "Direktur", "Wakil Direktur", "Chef", "Staff"];
 const formatDolar = (angka) => '$' + angka.toLocaleString('id-ID');
 const container = document.getElementById('roleSectionsContainer');
 const payoutRows = document.getElementById('payoutRows');
+const syncBadge = document.getElementById('syncBadge');
 
 let currentGrandTotalGlobal = 0;
 let dataPenerimaGaji = [];
 let isProcessingCloud = false;
 
-// Fungsi Simpan ke Cloud Database
+// Sinkronisasi data ke Cloud Server
 async function pushToCloud() {
-    if (isProcessingCloud) return;
     try {
+        syncBadge.innerText = "Syncing...";
+        syncBadge.className = "badge-live syncing";
         const payload = { savedDutyTimes, gajiArchive, employees };
         await fetch(CLOUD_STORAGE_URL, {
             method: 'POST',
             headers: { 'Authorization': CLOUD_TOKEN, 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
+        syncBadge.innerText = "Live Terhubung";
+        syncBadge.className = "badge-live";
     } catch (e) {
-        console.error("Gagal menyimpan ke cloud:", e);
+        console.error("Gagal simpan ke cloud:", e);
+        syncBadge.innerText = "Offline Mode";
     }
 }
 
-// Fungsi Ambil dari Cloud Database
-async function pullFromCloud() {
+// Tarik data terbaru dari Cloud Server
+async function pullFromCloud(isInitial = false) {
     if (isProcessingCloud) return;
     try {
+        if (isInitial) {
+            syncBadge.innerText = "Loading Data...";
+            syncBadge.className = "badge-live syncing";
+        }
         isProcessingCloud = true;
         const response = await fetch(CLOUD_STORAGE_URL, {
             method: 'GET',
@@ -620,8 +616,11 @@ async function pullFromCloud() {
                 if (cloudData.gajiArchive) gajiArchive = cloudData.gajiArchive;
             }
         }
+        syncBadge.innerText = "Live Terhubung";
+        syncBadge.className = "badge-live";
     } catch (e) {
-        console.error("Gagal mengambil data cloud:", e);
+        console.error("Gagal ambil data cloud:", e);
+        syncBadge.innerText = "Koneksi Bermasalah";
     } finally {
         isProcessingCloud = false;
         renderDashboard();
@@ -630,8 +629,8 @@ async function pullFromCloud() {
 }
 
 function renderDashboard() {
-    const activeSelect = document.activeElement;
-    const activeDataIndex = activeSelect ? activeSelect.getAttribute('data-index') : null;
+    const activeElement = document.activeElement;
+    const activeDataName = activeElement ? activeElement.getAttribute('data-name') : null;
 
     container.innerHTML = ""; 
     document.getElementById('totalEmployees').innerText = employees.length;
@@ -674,9 +673,15 @@ function renderDashboard() {
     
     updateHistoryDropdown();
 
-    if (activeDataIndex !== null) {
-        const inputToRefocus = document.querySelector(`.duty-input[data-index="${activeDataIndex}"]`);
-        if (inputToRefocus) inputToRefocus.focus();
+    if (activeDataName !== null) {
+        const inputToRefocus = document.querySelector(`.duty-input[data-name="${activeDataName}"]`);
+        if (inputToRefocus) {
+            inputToRefocus.focus();
+            // Posisikan kursor di akhir teks
+            const val = inputToRefocus.value;
+            inputToRefocus.value = '';
+            inputToRefocus.value = val;
+        }
     }
 }
 
@@ -901,7 +906,7 @@ document.getElementById('btnDownloadImage').addEventListener('click', function()
     }).catch(err => { alert("Gagal memproses gambar!"); console.error(err); });
 });
 
-// Real-Time auto save saat ngetik
+// Auto save saat mengetik jam duty dengan jeda (debounce) 1 detik
 let typingTimer;
 container.addEventListener('input', function() {
     updateKalkulasi();
@@ -910,10 +915,15 @@ container.addEventListener('input', function() {
 });
 
 // Ambil data awal saat web dibuka
-pullFromCloud();
+pullFromCloud(true);
 
-// Selalu sinkronisasi data dari device lain tiap 5 detik secara background
-setInterval(pullFromCloud, 5000);
+// Jalankan auto-refresh background tiap 4 detik agar HP & Laptop singkron tanpa reload halaman
+setInterval(function() {
+    // Hanya refresh kalau kamu lagi tidak fokus ngetik biar inputan gak ke-reset mendadak
+    if (document.activeElement.tagName !== 'INPUT') {
+        pullFromCloud(false);
+    }
+}, 4000);
 </script>
 
 </body>
