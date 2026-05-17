@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Penggajian Resto</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
         :root {
             --bg-color: #0d0d0d;
@@ -538,6 +541,23 @@ script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canv
 document.head.appendChild(script);
 
 // ==========================================
+// 🔴 KONFIGURASI FIREBASE CLOUD DATABASE
+// ==========================================
+const firebaseConfig = {
+    apiKey: "MASUKKAN_API_KEY_KAMU",
+    authDomain: "MASUKKAN_AUTH_DOMAIN_KAMU",
+    databaseURL: "MASUKKAN_DATABASE_URL_KAMU",
+    projectId: "MASUKKAN_PROJECT_ID_KAMU",
+    storageBucket: "MASUKKAN_STORAGE_BUCKET_KAMU",
+    messagingSenderId: "MASUKKAN_MESSAGING_SENDER_ID_KAMU",
+    appId: "MASUKKAN_APP_ID_KAMU"
+};
+
+// Inisialisasi Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// ==========================================
 // DATA KARYAWAN LENGKAP DENGAN GAJI POKOK ASLI
 // ==========================================
 let employees = [
@@ -573,7 +593,7 @@ let employees = [
 ];
 
 let savedDutyTimes = {};
-let gajiArchive = JSON.parse(localStorage.getItem('restoGajiArchive2')) || {};
+let gajiArchive = {};
 
 const roleSalaries = { "CEO": 85000, "Direktur": 80000, "Wakil Direktur": 75000, "Chef": 60000, "Staff": 55000 };
 const roleOrder = ["CEO", "Direktur", "Wakil Direktur", "Chef", "Staff"];
@@ -583,6 +603,33 @@ const payoutRows = document.getElementById('payoutRows');
 
 let currentGrandTotalGlobal = 0;
 let dataPenerimaGaji = [];
+
+// ==========================================
+// REAL-TIME SYNC DARI FIREBASE CLOUD
+// ==========================================
+database.ref('savedDutyTimes').on('value', (snapshot) => {
+    savedDutyTimes = snapshot.val() || {};
+    // Ambil semua input yang sedang aktif di UI
+    const inputs = document.querySelectorAll('.duty-input');
+    inputs.forEach(input => {
+        const empName = input.getAttribute('data-name');
+        if (savedDutyTimes[empName] !== undefined) {
+            input.value = savedDutyTimes[empName];
+        }
+    });
+    updateKalkulasi();
+});
+
+database.ref('gajiArchive').on('value', (snapshot) => {
+    gajiArchive = snapshot.val() || {};
+    updateHistoryDropdown();
+    
+    // Trigger perubahan tampilan riwayat jika dropdown sedang dipilih
+    const selectEl = document.getElementById('historySelect');
+    if (selectEl && selectEl.value) {
+        selectEl.dispatchEvent(new Event('change'));
+    }
+});
 
 function renderDashboard() {
     container.innerHTML = ""; 
@@ -632,9 +679,6 @@ function konversiKeJamDesimal(timeStr) {
     return (parseFloat(parts[0]) || 0) + ((parseFloat(parts[1]) || 0) / 60) + ((parseFloat(parts[2]) || 0) / 3600);
 }
 
-// ===================================================
-// LOGIKA FIX: KETENTUAN GAJI & BONUS BERDASARKAN JAM
-// ===================================================
 function updateKalkulasi() {
     let grandTotal = 0;
     let paidEmployeesHtml = "";
@@ -647,27 +691,23 @@ function updateKalkulasi() {
         const empName = input.getAttribute('data-name');
         const timeValue = input.value.trim();
         
-        savedDutyTimes[empName] = timeValue;
         const emp = employees[index];
         if (!emp) return; 
 
         const duty = konversiKeJamDesimal(timeValue);
         let finalSalary = 0; let statusText = ""; let statusClass = ""; let isEligible = false;
 
-        // 1. Duty kurang dari 10 jam : Tidak mendapatkan gaji
         if (duty < 10) {
             finalSalary = 0; 
             statusText = "Tidak Dapat Gaji"; 
             statusClass = "text-danger";
         } 
-        // 2. Duty 10 jam sampai sebelum 12 jam : Mendapatkan 80% gaji
         else if (duty >= 10 && duty < 12) {
             isEligible = true;
             finalSalary = emp.baseSalary * 0.8; 
             statusText = "Mendapat 80% Gaji"; 
             statusClass = "text-warning";
         } 
-        // 3. Duty 12 jam atau lebih : Mendapatkan gaji full + bonus 850/jam kelebihan
         else if (duty >= 12) {
             isEligible = true;
             const bonusHours = duty - 12; 
@@ -732,24 +772,29 @@ document.getElementById('btnArchiveWeek').addEventListener('click', function() {
         if (!confirm(`Arsip periode [${labelPeriode}] sudah ada. Ingin menimpa dengan rekap jam duty baru?`)) return;
     }
 
-    gajiArchive[labelPeriode] = {
+    // Set Data ke Firebase Cloud
+    database.ref('gajiArchive/' + labelPeriode).set({
         totalDana: formatDolar(Math.floor(currentGrandTotalGlobal)),
         listPenerima: [...dataPenerimaGaji]
-    };
-
-    localStorage.setItem('restoGajiArchive2', JSON.stringify(gajiArchive));
-    alert(`🗄️ Sukses! Data periode [${labelPeriode}] tersimpan di arsip riwayat bawah.`);
-
-    document.getElementById('archiveStartDate').value = "";
-    document.getElementById('archiveEndDate').value = "";
-    employees.forEach(emp => { savedDutyTimes[emp.name] = "00:00:00"; });
-    
-    renderDashboard();
-    updateKalkulasi();
+    }).then(() => {
+        alert(`🗄️ Sukses! Data periode [${labelPeriode}] tersimpan di Cloud Database.`);
+        
+        document.getElementById('archiveStartDate').value = "";
+        document.getElementById('archiveEndDate').value = "";
+        
+        // Reset Jam Duty di Firebase
+        let resetTimes = {};
+        employees.forEach(emp => { resetTimes[emp.name] = "00:00:00"; });
+        return database.ref('savedDutyTimes').set(resetTimes);
+    }).then(() => {
+        renderDashboard();
+        updateKalkulasi();
+    });
 });
 
 function updateHistoryDropdown() {
     const selectEl = document.getElementById('historySelect');
+    const currentSelection = selectEl.value;
     selectEl.innerHTML = '<option value="">-- Pilih Tanggal Arsip --</option>';
     
     const dates = Object.keys(gajiArchive);
@@ -763,6 +808,7 @@ function updateHistoryDropdown() {
         const opt = document.createElement('option');
         opt.value = date;
         opt.innerText = `Periode: ${date}`;
+        if(date === currentSelection) opt.selected = true;
         selectEl.appendChild(opt);
     });
 }
@@ -785,9 +831,11 @@ document.getElementById('historySelect').addEventListener('change', function() {
     btnDelete.style.display = "inline-block";
     
     let rowsHtml = "";
-    dataRecord.listPenerima.forEach(emp => {
-        rowsHtml += `<tr><td><strong>${emp.name}</strong></td><td><span style="color:var(--gold)">${emp.role}</span></td><td>${emp.duration}</td><td><span style="color:var(--gold); font-weight:bold;">${emp.totalPayout}</span></td></tr>`;
-    });
+    if(dataRecord.listPenerima) {
+        dataRecord.listPenerima.forEach(emp => {
+            rowsHtml += `<tr><td><strong>${emp.name}</strong></td><td><span style="color:var(--gold)">${emp.role}</span></td><td>${emp.duration}</td><td><span style="color:var(--gold); font-weight:bold;">${emp.totalPayout}</span></td></tr>`;
+        });
+    }
 
     histRows.innerHTML = rowsHtml;
     displayArea.style.display = "block";
@@ -796,20 +844,20 @@ document.getElementById('historySelect').addEventListener('change', function() {
 document.getElementById('btnDeleteSelectedArchive').addEventListener('click', function() {
     const selectedDate = document.getElementById('historySelect').value;
     if (confirm(`Yakin ingin menghapus permanen seluruh data arsip periode [${selectedDate}]?`)) {
-        delete gajiArchive[selectedDate];
-        localStorage.setItem('restoGajiArchive2', JSON.stringify(gajiArchive));
-        document.getElementById('historyDisplayArea').style.display = "none";
-        alert("Arsip berhasil dihapus.");
-        renderDashboard();
+        database.ref('gajiArchive/' + selectedDate).remove().then(() => {
+            document.getElementById('historyDisplayArea').style.display = "none";
+            alert("Arsip berhasil dihapus dari cloud.");
+        });
     }
 });
 
 function hapusKaryawan(name) {
     if (confirm(`Apakah anda yakin ingin menghapus "${name}" dari list resto?`)) {
         employees = employees.filter(emp => emp.name !== name);
-        delete savedDutyTimes[name];
-        renderDashboard();
-        updateKalkulasi();
+        database.ref('savedDutyTimes/' + name).remove().then(() => {
+            renderDashboard();
+            updateKalkulasi();
+        });
     }
 }
 
@@ -820,8 +868,21 @@ document.getElementById('btnAddMember').addEventListener('click', function() {
     if (!name || !role) { alert('Tolong isi Nama dan pilih Jabatan!'); return; }
     if (employees.some(emp => emp.name.toLowerCase() === name.toLowerCase())) { alert('Nama sudah terdaftar!'); return; }
     employees.push({ name: name, role: role, baseSalary: roleSalaries[role] });
-    nameInput.value = ""; roleSelect.selectedIndex = 0;
-    renderDashboard(); updateKalkulasi();
+    
+    database.ref('savedDutyTimes/' + name).set("00:00:00").then(() => {
+        nameInput.value = ""; roleSelect.selectedIndex = 0;
+        renderDashboard(); 
+        updateKalkulasi();
+    });
+});
+
+// Event Handler Input untuk Sinkronisasi ke Cloud saat Diketik
+container.addEventListener('input', function(e) {
+    if(e.target.classList.contains('duty-input')) {
+        const empName = e.target.getAttribute('data-name');
+        const timeValue = e.target.value.trim();
+        database.ref('savedDutyTimes/' + empName).set(timeValue);
+    }
 });
 
 document.getElementById('btnSharePayout').addEventListener('click', function() {
@@ -849,7 +910,6 @@ document.getElementById('btnDownloadImage').addEventListener('click', function()
 });
 
 renderDashboard();
-container.addEventListener('input', updateKalkulasi);
 </script>
 
 </body>
