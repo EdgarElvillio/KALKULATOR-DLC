@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Penggajian Resto Delicious</title>
+    <title>Dashboard Penggajian Resto</title>
     <style>
         :root {
             --bg-color: #0d0d0d;
@@ -530,7 +530,7 @@
 
 <script>
 // ===================================================
-// KONFIGURASI GITHUB CLOUD (AUTO-SYNC CONFIG)
+// GITHUB CONFIGURATION - LIVE REALTIME INTEGRATION
 // ===================================================
 const GH_CONFIG = {
     token: "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", 
@@ -555,13 +555,13 @@ let currentGrandTotalGlobal = 0;
 let dataPenerimaGaji = [];
 
 // ===================================================
-// UTILITY: LOAD & SAVE VIA GITHUB CLOUD API
+// API CORE: ENGINE SINKRONISASI CLOUD GITHUB
 // ===================================================
 async function loadFromGitHub() {
     const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${GH_CONFIG.path}`;
     try {
         const response = await fetch(url, {
-            headers: { "Authorization": `token ${GH_CONFIG.token}` }
+            headers: { "Authorization": `token ${GH_CONFIG.token}`, "Cache-Control": "no-cache" }
         });
         if (response.status === 200) {
             const data = await response.json();
@@ -631,7 +631,7 @@ async function saveToGitHub() {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                message: "Update data dashboard penggajian resto",
+                message: "Update data kalkulator cloud penggajian",
                 content: btoa(unescape(encodeURIComponent(JSON.stringify(payload)))),
                 sha: fileSha || undefined
             })
@@ -642,8 +642,12 @@ async function saveToGitHub() {
             fileSha = resData.content.sha; 
             document.getElementById('syncStatusLabel').innerHTML = "🟢 Semua Data Tersinkron Cloud";
         } else {
-            document.getElementById('syncStatusLabel').innerHTML = "⚠️ Sinkron terhambat! Memperbarui...";
-            loadFromGitHub(); 
+            const checkData = await fetch(url, { headers: { "Authorization": `token ${GH_CONFIG.token}` } });
+            if (checkData.ok) {
+                const resCheck = await checkData.json();
+                fileSha = resCheck.sha;
+                saveToGitHub();
+            }
         }
     } catch (err) {
         console.error("Gagal sinkron cloud:", err);
@@ -655,7 +659,7 @@ function triggerAutoSave() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
         saveToGitHub();
-    }, 1500); 
+    }, 1200); 
 }
 
 function renderDashboard() {
@@ -768,6 +772,7 @@ function updateKalkulasi() {
     document.getElementById('captureTotalCost').innerText = formatDolar(Math.floor(grandTotal));
 }
 
+// BINDING EVENT REALTIME INPUT SINKRONISASI
 container.addEventListener('input', function(e) {
     if (e.target.classList.contains('duty-input')) {
         updateKalkulasi();
@@ -909,6 +914,7 @@ document.getElementById('btnDownloadImage').addEventListener('click', function()
     }).catch(err => { alert("Gagal memproses gambar!"); console.error(err); });
 });
 
+// STARTING POINT APP
 loadFromGitHub();
 </script>
 
