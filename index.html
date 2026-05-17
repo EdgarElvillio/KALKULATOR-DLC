@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Penggajian Resto Delicious</title>
+    <title>Dashboard Penggajian Resto</title>
     <style>
         :root {
             --bg-color: #0d0d0d;
@@ -76,7 +76,6 @@
         }
         h2 { color: #fff; font-size: 22px; font-weight: 700; }
         .subtitle { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
-        .cloud-status { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 20px; background: #1a1a1a; border: 1px solid var(--border-color); }
 
         .main-layout-grid { display: flex; flex-direction: column; gap: 25px; width: 100%; }
         .layout-left, .layout-right { display: flex; flex-direction: column; gap: 25px; width: 100%; }
@@ -122,7 +121,7 @@
         .action-buttons-flex { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
         .btn-share { background-color: #1f1f1f; border: 1px solid var(--border-color); }
         .btn-screenshot { background-color: var(--primary-red); border: none; }
-        .btn-share, .btn-screenshot, .btn-archive, .btn-delete-archive { padding: 12px; border-radius: 6px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; }
+        .btn-share, .btn-screenshot { padding: 12px; border-radius: 6px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; }
 
         .summary-box { background-color: rgba(0,0,0,0.4); padding: 20px; border-radius: 10px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 20px; }
         .summary-left-group { display: flex; flex-direction: column; gap: 12px; }
@@ -132,21 +131,6 @@
         .card-value { font-size: 20px; font-weight: 800; }
         .card-value.text-gold { color: var(--gold); font-size: 24px; }
 
-        .archive-date-form { background-color: var(--card-bg-light); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
-        .archive-date-form h4 { font-size: 12px; color: var(--gold); margin-bottom: 10px; text-transform: uppercase; }
-        .date-inputs-flex { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-        .date-field { display: flex; flex-direction: column; gap: 4px; flex: 1; }
-        .date-field label { font-size: 10px; color: var(--text-muted); }
-        .date-field input[type="date"] { background-color: #0d0d0d; border: 1px solid var(--border-color); color: #fff; padding: 8px; border-radius: 4px; font-size: 12px; width: 100%; }
-        .btn-archive { background-color: var(--gold); color: #000; width: 100%; border: none; }
-
-        .history-box { background-color: transparent; border: 1px dashed var(--border-color); padding: 20px; border-radius: 10px; }
-        .history-box h3 { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; }
-        .history-controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-        .history-controls select { padding: 10px; background-color: var(--card-bg-light); border: 1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 13px; width: 100%; }
-        .btn-delete-archive { background-color: rgba(220, 38, 38, 0.1); color: #ef4444; border: 1px solid rgba(220, 38, 38, 0.2); }
-        .history-display { background-color: #0d0d0d; padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); }
-
         @media (min-width: 600px) {
             .add-form { flex-direction: row; }
             .input-group { flex: 1; }
@@ -154,8 +138,6 @@
             .action-buttons-flex { flex-direction: row; }
             .capture-summary-flex { flex-direction: row; justify-content: space-between; }
             .capture-card-mini { flex: 1; }
-            .history-controls { flex-direction: row; }
-            .history-controls select { width: auto; min-width: 255px; }
             .summary-left-group { flex-direction: row; }
             .summary-card { flex: 1; }
         }
@@ -178,7 +160,6 @@
                 <p class="subtitle">Sistem Manajemen Gaji & Rekap Anggota Resto</p>
             </div>
         </div>
-        <div class="cloud-status" id="cloudStatusBadge">⏳ Hubungkan ke Cloud...</div>
     </div>
     
     <div class="main-layout-grid">
@@ -211,7 +192,7 @@
                 <div id="payoutCaptureArea" class="capture-zone">
                     <div class="payout-header-inside">
                         <h3>📋 Rincian Karyawan Cair Gaji (&ge; 10 Jam)</h3>
-                        <span class="badge-live">Live Sync</span>
+                        <span class="badge-live">Live View</span>
                     </div>
                     
                     <div class="table-responsive">
@@ -261,79 +242,19 @@
                         <span id="grandTotal" class="card-value text-gold">$0</span>
                     </div>
                 </div>
-                
-                <div class="archive-date-form">
-                    <h4>📅 Setup Arsip Mingguan</h4>
-                    <div class="date-inputs-flex">
-                        <div class="date-field">
-                            <label>Mulai</label>
-                            <input type="date" id="archiveStartDate">
-                        </div>
-                        <div>s/d</div>
-                        <div class="date-field">
-                            <label>Selesai</label>
-                            <input type="date" id="archiveEndDate">
-                        </div>
-                    </div>
-                    <button type="button" id="btnArchiveWeek" class="btn-archive">🗄️ Arsipkan & Reset Jam Duty</button>
-                </div>
-            </div>
-
-            <div class="history-box">
-                <h3>🗂️ Riwayat Arsip Gaji Mingguan</h3>
-                <div class="history-controls">
-                    <select id="historySelect">
-                        <option value="">-- Belum ada arsip tersimpan --</option>
-                    </select>
-                    <button type="button" id="btnDeleteSelectedArchive" class="btn-delete-archive" style="display: none;">🗑️ Hapus Arsip Ini</button>
-                </div>
-                
-                <div id="historyDisplayArea" class="history-display" style="display: none;">
-                    <div style="margin-bottom:10px;">
-                        <span>Status Dana Terbayar:</span>
-                        <span id="histGrandTotal" class="text-gold" style="font-weight: 700; font-size: 18px;">$0</span>
-                    </div>
-                    <div class="table-responsive">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Nama</th>
-                                    <th>Jabatan</th>
-                                    <th>Jam Duty</th>
-                                    <th>Gaji Cair</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historyRows"></tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
         </div> 
     </div> 
 </div>
 
 <script>
-// Load Library Capture Gambar Secara Dinamis
+// Load html2canvas untuk fitur screenshot gambar rekap
 const script = document.createElement('script');
 script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
 document.head.appendChild(script);
 
-// ==========================================================
-// TEKNIK ANTI-DETEKSI ROBOT REPOSITORY (LOLOS SCANNING GITHUB)
-// Token dienkripsi Base64 dan dipotong agar tidak memicu sistem otomatis
-// ==========================================================
-const codeEncrypted = ["Z2hwX012RDZXcExwRDc2dTA5cThyUlg", "bVluUHpRMVIyczNUNHU1VjZ3Nw"];
-const tk = atob(codeEncrypted[0]) + atob(codeEncrypted[1]);
-
-const GH_CONFIG = {
-    token: tk,
-    owner: "EdgarElvillio",
-    repo: "KALKULATOR-DLC",
-    path: "data.json"
-};
-
-// Data Dasar Seluruh Anggota Tim Sesuai Gambar Rujukan
-let defaultEmployees = [
+// Data murni seluruh staf restoran di awal
+let employees = [
     { name: "Eleanor Seraphina", role: "CEO", baseSalary: 85000 },
     { name: "Udin W Mokondo", role: "CEO", baseSalary: 85000 },
     { name: "Camelia Iris TAKA", role: "Direktur", baseSalary: 80000 },
@@ -361,101 +282,43 @@ let defaultEmployees = [
     { name: "Ariana", role: "Staff", baseSalary: 55000 }
 ];
 
-let appData = { employees: [...defaultEmployees], savedDutyTimes: {}, gajiArchive: {} };
-let currentSha = null;
-let saveTimeout = null;
-
 const roleSalaries = { "CEO": 85000, "Direktur": 80000, "Wakil Direktur": 75000, "Chef": 60000, "Staff": 55000 };
 const roleOrder = ["CEO", "Direktur", "Wakil Direktur", "Chef", "Staff"];
 const formatDolar = (num) => '$' + num.toLocaleString('id-ID');
 
-async function loadFromCloud() {
-    const badge = document.getElementById('cloudStatusBadge');
-    try {
-        const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${GH_CONFIG.path}`;
-        const response = await fetch(url, {
-            headers: { "Authorization": `token ${GH_CONFIG.token}`, "Accept": "application/vnd.github.v3+json" }
-        });
-        if (response.status === 404) {
-            badge.innerHTML = "🟢 Cloud Fresh (Ready)";
-            saveToCloud();
-            return;
-        }
-        const data = await response.json();
-        currentSha = data.sha;
-        appData = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-        badge.innerHTML = "🟢 Terhubung &amp; Sinkron Cloud";
-        badge.style.color = "#10b981";
-        renderDashboard();
-        updateKalkulasi();
-    } catch (e) {
-        badge.innerHTML = "🔴 Gagal Sinkronisasi Cloud";
-        badge.style.color = "#ef4444";
-        renderDashboard();
-        updateKalkulasi();
-    }
-}
-
-async function saveToCloud() {
-    const badge = document.getElementById('cloudStatusBadge');
-    badge.innerHTML = "⏳ Menyimpan ke Cloud...";
-    badge.style.color = "#f59e0b";
-    try {
-        const url = `https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${GH_CONFIG.path}`;
-        const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(appData, null, 2))));
-        const bodyData = { message: "Update Data Gaji Otomatis", content: contentBase64 };
-        if (currentSha) bodyData.sha = currentSha;
-
-        const response = await fetch(url, {
-            method: "PUT",
-            headers: { "Authorization": `token ${GH_CONFIG.token}`, "Content-Type": "application/json" },
-            body: JSON.stringify(bodyData)
-        });
-        const resData = await response.json();
-        currentSha = resData.content.sha;
-        badge.innerHTML = "🟢 Terhubung &amp; Sinkron Cloud";
-        badge.style.color = "#10b981";
-    } catch (e) {
-        badge.innerHTML = "🔴 Gagal Simpan Cloud";
-        badge.style.color = "#ef4444";
-    }
-}
-
 function renderDashboard() {
     const container = document.getElementById('roleSectionsContainer');
     container.innerHTML = "";
-    document.getElementById('totalEmployees').innerText = appData.employees.length;
+    document.getElementById('totalEmployees').innerText = employees.length;
 
     roleOrder.forEach(role => {
-        const filtered = appData.employees.filter(e => e.role === role);
+        const filtered = employees.filter(e => e.role === role);
         if (filtered.length > 0) {
             const sect = document.createElement('div');
             sect.className = "role-section";
             let rowsHtml = "";
             
             filtered.forEach(emp => {
-                const origIdx = appData.employees.findIndex(e => e.name === emp.name);
-                const time = appData.savedDutyTimes[emp.name] || "00:00:00";
+                const origIdx = employees.findIndex(e => e.name === emp.name);
                 rowsHtml += `
                     <tr>
                         <td><strong>${emp.name}</strong></td>
                         <td>${formatDolar(emp.baseSalary)}</td>
-                        <td><input type="text" class="duty-input" data-name="${emp.name}" data-index="${origIdx}" value="${time}" placeholder="00:00:00"></td>
+                        <td><input type="text" class="duty-input" data-index="${origIdx}" value="00:00:00" placeholder="00:00:00"></td>
                         <td><span class="status-text text-danger" id="status-${origIdx}">Tidak Duty (< 10j)</span></td>
                         <td><span class="gaji-final" id="gaji-${origIdx}">$0</span></td>
-                        <td><button class="btn-delete" onclick="hapusKaryawan('${emp.name}')">✕</button></td>
+                        <td><button class="btn-delete" onclick="hapusKaryawan(${origIdx})">✕</button></td>
                     </tr>
                 `;
             });
 
             sect.innerHTML = `
                 <div class="role-title">${role}</div>
-                <div class="table-responsive"><table><thead><tr><th>Nama</th><th>Gaji Pokok</th><th>Waktu Duty</th><th>Status / Potongan</th><th>Total Gaji</th><th>Aksi</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+                <div class="table-responsive"><table><thead><tr><th>Nama</th><th>Gaji Pokok</th><th>Waktu Duty</th><th>Status</th><th>Total</th><th>Aksi</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
             `;
             container.appendChild(sect);
         }
     });
-    updateHistoryDropdown();
 }
 
 function konversiKeJam(str) {
@@ -470,13 +333,10 @@ function updateKalkulasi() {
 
     inputs.forEach(input => {
         const idx = parseInt(input.getAttribute('data-index'));
-        const name = input.getAttribute('data-name');
-        const time = input.value.trim();
-        appData.savedDutyTimes[name] = time;
-
-        const emp = appData.employees[idx];
+        const emp = employees[idx];
         if(!emp) return;
 
+        const time = input.value.trim();
         const duty = konversiKeJam(time);
         let sal = 0; let txt = "Tidak Duty (< 10j)"; let cls = "text-danger"; let ok = false;
 
@@ -510,29 +370,28 @@ function updateKalkulasi() {
     window.currentPaidCache = listPaid;
 }
 
-function hapusKaryawan(name) {
-    if (confirm(`Hapus ${name} dari daftar staf aktif?`)) {
-        appData.employees = appData.employees.filter(e => e.name !== name);
-        delete appData.savedDutyTimes[name];
-        renderDashboard(); updateKalkulasi(); saveToCloud();
+function hapusKaryawan(idx) {
+    if (confirm(`Hapus ${employees[idx].name}?`)) {
+        employees.splice(idx, 1);
+        renderDashboard(); 
+        updateKalkulasi();
     }
 }
 
 document.getElementById('btnAddMember').addEventListener('click', function() {
     const name = document.getElementById('newEmpName').value.trim();
     const role = document.getElementById('newEmpRole').value;
-    if(!name || !role) return alert("Isi nama dan pilih jabatan karyawan!");
+    if(!name || !role) return alert("Harap isi nama dan pilih jabatan!");
     
-    appData.employees.push({ name: name, role: role, baseSalary: roleSalaries[role] });
+    employees.push({ name: name, role: role, baseSalary: roleSalaries[role] });
     document.getElementById('newEmpName').value = "";
-    renderDashboard(); updateKalkulasi(); saveToCloud();
+    renderDashboard(); 
+    updateKalkulasi();
 });
 
 document.getElementById('roleSectionsContainer').addEventListener('input', (e) => {
     if(e.target.classList.contains('duty-input')) {
         updateKalkulasi();
-        clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(saveToCloud, 1000);
     }
 });
 
@@ -542,108 +401,18 @@ document.getElementById('btnSharePayout').addEventListener('click', function() {
     window.currentPaidCache.forEach((emp, i) => {
         txt += `${i + 1}. Nama: ${emp.name}\n   Jabatan: ${emp.role}\n   Total Waktu Duty: ${emp.duration}\n   Total Gaji Cair: ${emp.payout}\n------------------------------------\n`;
     });
-    navigator.clipboard.writeText(txt).then(() => { alert("📋 Teks rincian gaji berhasil disalin ke clipboard!"); });
+    navigator.clipboard.writeText(txt).then(() => { alert("📋 Rincian gaji disalin!"); });
 });
 
 document.getElementById('btnDownloadImage').addEventListener('click', function() {
-    const target = document.getElementById('payoutCaptureArea');
-    html2canvas(target, { backgroundColor: "#0a0a0a", scale: 2 }).then(canvas => {
+    html2canvas(document.getElementById('payoutCaptureArea'), { backgroundColor: "#0a0a0a", scale: 2 }).then(canvas => {
         const a = document.createElement('a'); a.href = canvas.toDataURL("image/png");
-        a.download = `Rekap-Gaji-Resto.png`; a.click();
+        a.download = `Rekap-Gaji.png`; a.click();
     });
 });
 
-// Fitur Arsip Mingguan
-document.getElementById('btnArchiveWeek').addEventListener('click', function() {
-    const start = document.getElementById('archiveStartDate').value;
-    const end = document.getElementById('archiveEndDate').value;
-    if(!start || !end) return alert("Pilih tanggal mulai dan selesai arsip!");
-
-    const periode = `${start} s.d ${end}`;
-    let arsipList = [];
-    let totalArsipDana = 0;
-
-    const inputs = document.querySelectorAll('.duty-input');
-    inputs.forEach(input => {
-        const name = input.getAttribute('data-name');
-        const time = input.value.trim();
-        const duty = konversiKeJam(time);
-        const emp = appData.employees.find(e => e.name === name);
-        
-        if(emp && duty > 0) {
-            let sal = 0;
-            if (duty >= 10 && duty < 12) sal = emp.baseSalary * 0.8;
-            else if (duty >= 12) sal = emp.baseSalary + ((duty - 12) * 850);
-            
-            if(sal > 0) {
-                arsipList.push({ name: emp.name, role: emp.role, time: time, payout: Math.floor(sal) });
-                totalArsipDana += Math.floor(sal);
-            }
-        }
-    });
-
-    if(arsipList.length === 0) return alert("Tidak ada data jam kerja aktif untuk diarsipkan!");
-
-    if(!appData.gajiArchive) appData.gajiArchive = {};
-    appData.gajiArchive[periode] = { total: totalArsipDana, data: arsipList };
-
-    // Reset Jam Kerja ke 00:00:00
-    appData.employees.forEach(emp => { appData.savedDutyTimes[emp.name] = "00:00:00"; });
-    
-    document.getElementById('archiveStartDate').value = "";
-    document.getElementById('archiveEndDate').value = "";
-    
-    alert(`🗄️ Periode ${periode} berhasil diarsipkan & jam kerja telah direset!`);
-    renderDashboard(); updateKalkulasi(); saveToCloud();
-});
-
-function updateHistoryDropdown() {
-    const s = document.getElementById('historySelect');
-    s.innerHTML = '<option value="">-- Pilih Tanggal Arsip --</option>';
-    if(appData.gajiArchive) {
-        Object.keys(appData.gajiArchive).forEach(d => {
-            s.innerHTML += `<option value="${d}">Periode: ${d}</option>`;
-        });
-    }
-}
-
-document.getElementById('historySelect').addEventListener('change', function() {
-    const val = this.value;
-    const display = document.getElementById('historyDisplayArea');
-    const delBtn = document.getElementById('btnDeleteSelectedArchive');
-    
-    if(!val || !appData.gajiArchive || !appData.gajiArchive[val]) {
-        display.style.display = "none";
-        delBtn.style.display = "none";
-        return;
-    }
-
-    delBtn.style.display = "inline-block";
-    display.style.display = "block";
-    
-    const arch = appData.gajiArchive[val];
-    document.getElementById('histGrandTotal').innerText = formatDolar(arch.total);
-    
-    let rows = "";
-    arch.data.forEach(item => {
-        rows += `<tr><td><strong>${item.name}</strong></td><td>${item.role}</td><td>${item.time}</td><td><span class="text-gold">${formatDolar(item.payout)}</span></td></tr>`;
-    });
-    document.getElementById('historyRows').innerHTML = rows;
-});
-
-document.getElementById('btnDeleteSelectedArchive').addEventListener('click', function() {
-    const val = document.getElementById('historySelect').value;
-    if(!val) return;
-    if(confirm(`Hapus permanen arsip periode ${val}?`)) {
-        delete appData.gajiArchive[val];
-        document.getElementById('historyDisplayArea').style.display = "none";
-        document.getElementById('btnDeleteSelectedArchive').style.display = "none";
-        renderDashboard(); saveToCloud();
-    }
-});
-
-// Jalankan Sinkronisasi Pertama Kali
-loadFromCloud();
+// Jalankan pertamakali
+renderDashboard();
 </script>
 </body>
 </html>
