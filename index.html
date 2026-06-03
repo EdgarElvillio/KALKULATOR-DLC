@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Penggajian Resto</title>
+    <title>Dashboard Penggajian Resto DELICIOUS</title>
     <style>
         :root {
             --bg-color: #0d0d0d;
@@ -12,8 +12,8 @@
             --primary-red: #dc2626;
             --primary-red-hover: #b91c1c;
             --red-glow: rgba(220, 38, 38, 0.15);
-            --gold: #d4af37;
-            --gold-glow: rgba(212, 175, 55, 0.15);
+            --gold: #ffb703;
+            --gold-glow: rgba(255, 183, 3, 0.15);
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
             --border-color: #2d2d2d;
@@ -150,6 +150,7 @@
             border-radius: 10px;
             padding: 20px;
             border: 1px solid var(--border-color);
+            margin-bottom: 15px;
         }
         .role-title {
             color: #fff;
@@ -228,7 +229,6 @@
         }
         .payout-header-inside h3 { font-size: 13px; color: var(--gold); text-transform: uppercase; }
         
-        /* Loading & Sync Badge */
         .badge-live {
             font-size: 10px;
             background: rgba(16, 185, 129, 0.15);
@@ -258,7 +258,7 @@
             border: 1px solid var(--border-color);
         }
         .highlight-gold-mini {
-            border-color: rgba(212, 175, 55, 0.3);
+            border-color: rgba(255, 183, 3, 0.3);
             background: var(--gold-glow);
         }
         .mini-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
@@ -297,7 +297,7 @@
             padding: 15px;
             border-radius: 8px;
         }
-        .highlight-card { border-color: rgba(212, 175, 55, 0.3); background-image: linear-gradient(135deg, var(--card-bg-light) 0%, rgba(212,175,55,0.02) 100%); }
+        .highlight-card { border-color: rgba(255, 183, 3, 0.3); background-image: linear-gradient(135deg, var(--card-bg-light) 0%, rgba(255,183,3,0.02) 100%); }
         .card-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
         .card-value { font-size: 20px; font-weight: 800; color: #fff; }
         .card-value.text-gold { color: var(--gold); font-size: 24px; }
@@ -383,7 +383,7 @@
         <div class="header-logo">
             <span class="icon-glow">🍽️</span>
             <div>
-                <h2>Dashboard Penggajian Resto</h2>
+                <h2>Dashboard Penggajian DELICIOUS RESTO</h2>
                 <p class="subtitle">Sistem Manajemen Gaji & Rekap Real-Time Anggota Resto</p>
             </div>
         </div>
@@ -400,11 +400,11 @@
                     <div class="input-group">
                         <select id="newEmpRole">
                             <option value="" disabled selected>-- Pilih Jabatan --</option>
-                            <option value="CEO">CEO ($85.000)</option>
-                            <option value="Direktur">Direktur ($80.000)</option>
-                            <option value="Wakil Direktur">Wakil Direktur ($75.000)</option>
-                            <option value="Chef">Chef ($60.000)</option>
-                            <option value="Staff">Staff ($55.000)</option>
+                            <option value="CEO">CEO ($210.000)</option>
+                            <option value="Direktur">Direktur ($190.000)</option>
+                            <option value="Wakil Direktur">Wakil Direktur ($175.000)</option>
+                            <option value="Chef">Chef ($140.000)</option>
+                            <option value="Staff">Staff ($125.000)</option>
                         </select>
                     </div>
                     <button type="button" id="btnAddMember">Tambah ke List</button>
@@ -418,7 +418,7 @@
             <div class="payout-details-box">
                 <div id="payoutCaptureArea" class="capture-zone">
                     <div class="payout-header-inside">
-                        <h3>📋 Rincian Karyawan Cair Gaji (&ge; 10 Jam)</h3>
+                        <h3>📋 Rincian Karyawan Cair Gaji (Ada Jam Duty)</h3>
                         <span id="syncBadge" class="badge-live">Koneksi Cloud Aman</span>
                     </div>
                     
@@ -534,38 +534,12 @@ document.head.appendChild(script);
 const CLOUD_STORAGE_URL = 'https://jsonbin.org/sendy_resto_payroll/data';
 const CLOUD_TOKEN = 'token 8bfd8858-6938-4e31-862d-0b6dc34fa793';
 
-let employees = [
-    { name: "Eleanor Seraphina", role: "CEO", baseSalary: 85000 },
-    { name: "Udin W Mokondo", role: "CEO", baseSalary: 85000 },
-    { name: "Camelia Iris TAKA", role: "Direktur", baseSalary: 80000 },
-    { name: "Brandon Adelard Diviner", role: "Direktur", baseSalary: 80000 },
-    { name: "Rayisa Hildegard (SPV)", role: "Wakil Direktur", baseSalary: 75000 },
-    { name: "Vanez de joulene (SPV)", role: "Wakil Direktur", baseSalary: 75000 },
-    { name: "Gretta Aveline TAKA (ADM)", role: "Wakil Direktur", baseSalary: 75000 },
-    { name: "Edgar Elvilio S TAKA (HRD/SDM)", role: "Wakil Direktur", baseSalary: 75000 },
-    { name: "Gracie Neyra (HRD/SDM)", role: "Wakil Direktur", baseSalary: 75000 },
-    { name: "Raymond Miles", role: "Chef", baseSalary: 60000 },
-    { name: "Ethan Dean L. TAKA", role: "Chef", baseSalary: 60000 },
-    { name: "Aluna Xyra", role: "Chef", baseSalary: 60000 },
-    { name: "Lucy Hanami", role: "Chef", baseSalary: 60000 },
-    { name: "ZENO._XVEP", role: "Staff", baseSalary: 55000 },
-    { name: "Steven Boyen", role: "Staff", baseSalary: 55000 },
-    { name: "Shuhua Crystal", role: "Staff", baseSalary: 55000 },
-    { name: "Grace Lannister", role: "Staff", baseSalary: 55000 },
-    { name: "Cleo Nara Xylotto", role: "Staff", baseSalary: 55000 },
-    { name: "Junnn Laurent", role: "Staff", baseSalary: 55000 },
-    { name: "Atra Siregar", role: "Staff", baseSalary: 55000 },
-    { name: "Lieu Chang", role: "Staff", baseSalary: 55000 },
-    { name: "Gabriella B Yamato", role: "Staff", baseSalary: 55000 },
-    { name: "Ariana Cruz", role: "Staff", baseSalary: 55000 },
-    { name: "Biyel", role: "Staff", baseSalary: 55000 },
-    { name: "Ariana", role: "Staff", baseSalary: 55000 }
-];
-
+// Array kosong sesuai request, nama diinput manual dari dashboard
+let employees = [];
 let savedDutyTimes = {};
 let gajiArchive = {};
 
-const roleSalaries = { "CEO": 85000, "Direktur": 80000, "Wakil Direktur": 75000, "Chef": 60000, "Staff": 55000 };
+const roleSalaries = { "CEO": 210000, "Direktur": 190000, "Wakil Direktur": 175000, "Chef": 140000, "Staff": 125000 };
 const roleOrder = ["CEO", "Direktur", "Wakil Direktur", "Chef", "Staff"];
 const formatDolar = (angka) => '$' + angka.toLocaleString('id-ID');
 const container = document.getElementById('roleSectionsContainer');
@@ -576,7 +550,6 @@ let currentGrandTotalGlobal = 0;
 let dataPenerimaGaji = [];
 let isProcessingCloud = false;
 
-// Sinkronisasi data ke Cloud Server
 async function pushToCloud() {
     try {
         syncBadge.innerText = "Syncing...";
@@ -595,7 +568,6 @@ async function pushToCloud() {
     }
 }
 
-// Tarik data terbaru dari Cloud Server
 async function pullFromCloud(isInitial = false) {
     if (isProcessingCloud) return;
     try {
@@ -611,7 +583,12 @@ async function pullFromCloud(isInitial = false) {
         if (response.ok) {
             const cloudData = await response.json();
             if (cloudData && typeof cloudData === 'object') {
-                if (cloudData.employees) employees = cloudData.employees;
+                if (cloudData.employees) {
+                    employees = cloudData.employees.map(emp => {
+                        if(roleSalaries[emp.role]) emp.baseSalary = roleSalaries[emp.role];
+                        return emp;
+                    });
+                }
                 if (cloudData.savedDutyTimes) savedDutyTimes = cloudData.savedDutyTimes;
                 if (cloudData.gajiArchive) gajiArchive = cloudData.gajiArchive;
             }
@@ -635,41 +612,48 @@ function renderDashboard() {
     container.innerHTML = ""; 
     document.getElementById('totalEmployees').innerText = employees.length;
 
-    roleOrder.forEach(role => {
-        const filteredEmp = employees.filter(emp => emp.role === role);
-        
-        if (filteredEmp.length > 0) {
-            const section = document.createElement('div');
-            section.className = "role-section";
+    if (employees.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; color: var(--text-muted); background: rgba(0,0,0,0.2); padding: 40px; border-radius: 10px; border: 1px dashed var(--border-color);">
+                👋 Belum ada karyawan aktif. Yuk tambahkan karyawan baru menggunakan form di atas!
+            </div>`;
+    } else {
+        roleOrder.forEach(role => {
+            const filteredEmp = employees.filter(emp => emp.role === role);
             
-            let rowsHtml = "";
-            filteredEmp.forEach(emp => {
-                const originalIndex = employees.findIndex(e => e.name === emp.name);
-                const savedTime = savedDutyTimes[emp.name] || "00:00:00";
+            if (filteredEmp.length > 0) {
+                const section = document.createElement('div');
+                section.className = "role-section";
                 
-                rowsHtml += `
-                    <tr>
-                        <td><strong>${emp.name}</strong></td>
-                        <td>${formatDolar(emp.baseSalary)}</td>
-                        <td>
-                            <input type="text" class="duty-input" data-name="${emp.name}" data-index="${originalIndex}" placeholder="00:00:00" value="${savedTime}">
-                        </td>
-                        <td><span class="status-text text-danger" id="status-${originalIndex}">Tidak Duty (< 10j)</span></td>
-                        <td><span class="gaji-final" id="gaji-${originalIndex}">$0</span></td>
-                        <td style="text-align: center;">
-                            <button type="button" class="btn-delete" onclick="hapusKaryawan('${emp.name}')">✕</button>
-                        </td>
-                    </tr>
-                `;
-            });
+                let rowsHtml = "";
+                filteredEmp.forEach(emp => {
+                    const originalIndex = employees.findIndex(e => e.name === emp.name);
+                    const savedTime = savedDutyTimes[emp.name] || "00:00:00";
+                    
+                    rowsHtml += `
+                        <tr>
+                            <td><strong>${emp.name}</strong></td>
+                            <td>${formatDolar(emp.baseSalary)}</td>
+                            <td>
+                                <input type="text" class="duty-input" data-name="${emp.name}" data-index="${originalIndex}" placeholder="00:00:00" value="${savedTime}">
+                            </td>
+                            <td><span class="status-text text-danger" id="status-${originalIndex}">Tidak Duty</span></td>
+                            <td><span class="gaji-final" id="gaji-${originalIndex}">$0</span></td>
+                            <td style="text-align: center;">
+                                <button type="button" class="btn-delete" onclick="hapusKaryawan('${emp.name}')">✕</button>
+                            </td>
+                        </tr>
+                    `;
+                });
 
-            section.innerHTML = `
-                <div class="role-title">${role}</div>
-                <div class="table-responsive"><table><thead><tr><th>Nama</th><th>Gaji Pokok</th><th>Waktu Duty</th><th>Status / Potongan</th><th>Total Gaji</th><th style="text-align:center;">Aksi</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
-            `;
-            container.appendChild(section);
-        }
-    });
+                section.innerHTML = `
+                    <div class="role-title">${role}</div>
+                    <div class="table-responsive"><table><thead><tr><th>Nama</th><th>Gaji Pokok</th><th>Waktu Duty</th><th>Status / Bonus</th><th>Total Gaji</th><th style="text-align:center;">Aksi</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+                `;
+                container.appendChild(section);
+            }
+        });
+    }
     
     updateHistoryDropdown();
 
@@ -677,7 +661,6 @@ function renderDashboard() {
         const inputToRefocus = document.querySelector(`.duty-input[data-name="${activeDataName}"]`);
         if (inputToRefocus) {
             inputToRefocus.focus();
-            // Posisikan kursor di akhir teks
             const val = inputToRefocus.value;
             inputToRefocus.value = '';
             inputToRefocus.value = val;
@@ -686,11 +669,17 @@ function renderDashboard() {
 }
 
 function konversiKeJamDesimal(timeStr) {
-    if (!timeStr) return 0;
+    if (!timeStr || !timeStr.includes(':')) {
+        let num = parseFloat(timeStr);
+        return isNaN(num) ? 0 : num;
+    }
     const parts = timeStr.split(':');
     return (parseFloat(parts[0]) || 0) + ((parseFloat(parts[1]) || 0) / 60) + ((parseFloat(parts[2]) || 0) / 3600);
 }
 
+// ==========================================================
+// UPDATE LOGIKA SKEMA PERHITUNGAN BARU ($4.000 & $3.000)
+// ==========================================================
 function updateKalkulasi() {
     let grandTotal = 0;
     let paidEmployeesHtml = "";
@@ -708,31 +697,38 @@ function updateKalkulasi() {
         if (!emp) return; 
 
         const duty = konversiKeJamDesimal(timeValue);
-        let finalSalary = 0; let statusText = ""; let statusClass = ""; let isEligible = false;
+        let finalSalary = 0; 
+        let statusText = ""; 
+        let statusClass = ""; 
+        let isEligible = false;
 
-        if (duty < 10) {
-            finalSalary = 0; 
-            statusText = "Tidak Dapat Gaji"; 
+        if (duty <= 0) {
+            finalSalary = 0;
+            statusText = "Belum Ada Jam Duty";
             statusClass = "text-danger";
-        } 
-        else if (duty >= 10 && duty < 12) {
+        }
+        else if (duty < 12) {
+            // 🟡 DI BAWAH 12 JAM: Murni hitungan per jam $4.000 / Jam
             isEligible = true;
-            finalSalary = emp.baseSalary * 0.8; 
-            statusText = "Mendapat 80% Gaji"; 
+            finalSalary = duty * 4000;
+            statusText = `Gaji Murni per Jam ($4.000/j)`;
             statusClass = "text-warning";
         } 
-        else if (duty >= 12) {
+        else if (duty === 12) {
+            // PAS 12 JAM: Gaji Pokok Penuh murni tanpa bonus
             isEligible = true;
-            const bonusHours = duty - 12; 
-            const totalBonus = bonusHours * 850; 
-            finalSalary = emp.baseSalary + totalBonus; 
+            finalSalary = emp.baseSalary;
+            statusText = "Target Tercapai (Gaji Full)";
+            statusClass = "text-success";
+        } 
+        else if (duty > 12) {
+            // 🔵 DI ATAS 12 JAM: Gaji Pokok Penuh + Bonus tambahan terhitung sejak jam ke-10 ($3.000 / Jam)
+            isEligible = true;
+            const kelebihanJamBonus = duty - 10; 
+            const totalBonusOvertime = kelebihanJamBonus * 3000;
+            finalSalary = emp.baseSalary + totalBonusOvertime;
             
-            if (bonusHours > 0) {
-                const sisaMenit = Math.floor((bonusHours % 1) * 60);
-                statusText = `Gaji Full + Bonus ${Math.floor(bonusHours)}j ${sisaMenit}m (+$${Math.floor(totalBonus).toLocaleString('id-ID')})`;
-            } else {
-                statusText = "Gaji Full (Pas 12j)";
-            }
+            statusText = `Gapok Full + Bonus Overtime (+$${Math.round(totalBonusOvertime).toLocaleString('id-ID')})`;
             statusClass = "text-success";
         }
 
@@ -742,21 +738,26 @@ function updateKalkulasi() {
         if(statusEl && gajiEl) {
             statusEl.innerText = statusText;
             statusEl.className = `status-text ${statusClass}`;
-            gajiEl.innerText = formatDolar(Math.floor(finalSalary));
+            gajiEl.innerText = formatDolar(Math.round(finalSalary));
         }
 
-        if (isEligible) {
-            dataPenerimaGaji.push({ name: emp.name, role: emp.role, duration: timeValue, totalPayout: formatDolar(Math.floor(finalSalary)) });
-            paidEmployeesHtml += `<tr><td><strong>${emp.name}</strong></td><td><span class="text-gold" style="font-weight:600;">${emp.role}</span></td><td><strong>${timeValue}</strong></td><td><span class="text-gold" style="font-weight:bold;">${formatDolar(Math.floor(finalSalary))}</span></td></tr>`;
+        if (isEligible && duty > 0) {
+            dataPenerimaGaji.push({ 
+                name: emp.name, 
+                role: emp.role, 
+                duration: timeValue, 
+                totalPayout: formatDolar(Math.round(finalSalary)) 
+            });
+            paidEmployeesHtml += `<tr><td><strong>${emp.name}</strong></td><td><span class="text-gold" style="font-weight:600;">${emp.role}</span></td><td><strong>${timeValue}</strong></td><td><span class="text-gold" style="font-weight:bold;">${formatDolar(Math.round(finalSalary))}</span></td></tr>`;
         }
     });
 
     currentGrandTotalGlobal = grandTotal;
     payoutRows.innerHTML = paidEmployeesHtml || `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); font-style: italic; padding: 30px 0;">Belum ada data gaji yang cair.</td></tr>`;
     
-    document.getElementById('grandTotal').innerText = formatDolar(Math.floor(grandTotal));
+    document.getElementById('grandTotal').innerText = formatDolar(Math.round(grandTotal));
     document.getElementById('captureCountPaid').innerText = `${dataPenerimaGaji.length} Orang`;
-    document.getElementById('captureTotalCost').innerText = formatDolar(Math.floor(grandTotal));
+    document.getElementById('captureTotalCost').innerText = formatDolar(Math.round(grandTotal));
 }
 
 function formatTanggalIndo(dateStr) {
@@ -786,7 +787,7 @@ document.getElementById('btnArchiveWeek').addEventListener('click', async functi
     }
 
     gajiArchive[labelPeriode] = {
-        totalDana: formatDolar(Math.floor(currentGrandTotalGlobal)),
+        totalDana: formatDolar(Math.round(currentGrandTotalGlobal)),
         listPenerima: [...dataPenerimaGaji]
     };
 
@@ -884,7 +885,7 @@ document.getElementById('btnAddMember').addEventListener('click', async function
 
 document.getElementById('btnSharePayout').addEventListener('click', function() {
     if (dataPenerimaGaji.length === 0) { alert("Belum ada rincian karyawan yang cair gaji!"); return; }
-    let teksLaporan = `====================================\n   REKAP CAIR GAJI ANGGOTA RESTO    \n====================================\n\n`;
+    let teksLaporan = `====================================\n   REKAP CAIR GAJI DELICIOUS RESTO  \n====================================\n\n`;
     dataPenerimaGaji.forEach((emp, index) => {
         teksLaporan += `${index + 1}. Nama: ${emp.name}\n   Jabatan: ${emp.role}\n   Total Waktu Duty: ${emp.duration}\n   Total Gaji Cair: ${emp.totalPayout}\n------------------------------------\n`;
     });
@@ -900,13 +901,12 @@ document.getElementById('btnDownloadImage').addEventListener('click', function()
         const timestamp = new Date().toLocaleDateString('id-ID').replace(/\//g, '-');
         const downloadLink = document.createElement('a');
         downloadLink.href = imageURI;
-        downloadLink.download = `Rekap-Gaji-Resto-${timestamp}.png`;
+        downloadLink.download = `Rekap-Gaji-Delicious-${timestamp}.png`;
         document.body.appendChild(downloadLink); downloadLink.click(); document.body.removeChild(downloadLink);
         alert("📸 Gambar rekap sukses di-download!");
     }).catch(err => { alert("Gagal memproses gambar!"); console.error(err); });
 });
 
-// Auto save saat mengetik jam duty dengan jeda (debounce) 1 detik
 let typingTimer;
 container.addEventListener('input', function() {
     updateKalkulasi();
@@ -914,12 +914,9 @@ container.addEventListener('input', function() {
     typingTimer = setTimeout(pushToCloud, 1000); 
 });
 
-// Ambil data awal saat web dibuka
 pullFromCloud(true);
 
-// Jalankan auto-refresh background tiap 4 detik agar HP & Laptop singkron tanpa reload halaman
 setInterval(function() {
-    // Hanya refresh kalau kamu lagi tidak fokus ngetik biar inputan gak ke-reset mendadak
     if (document.activeElement.tagName !== 'INPUT') {
         pullFromCloud(false);
     }
